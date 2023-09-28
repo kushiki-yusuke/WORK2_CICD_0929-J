@@ -1,0 +1,59 @@
+# Docker Composeのバージョンを指定しています。
+version: '3'
+
+# このコンポーズファイルで定義される各サービスをリストしています。
+services:
+
+  # 'web'という名前のサービスを定義しています。
+  web:
+    # このサービスのDockerイメージのビルド情報を指定しています。
+    build:
+      # ビルドのコンテキストとして現在のディレクトリ(.)を使用します。
+      context: .
+      # Dockerfileの'build_as_root'というステージまでをビルドします。
+      target: build_as_root
+
+    # コンテナ起動時のコマンドを指定しています。ここではElixirの対話的シェルを起動し、Phoenixサーバを実行します。
+    command: iex -S mix phx.server
+
+    # 環境変数をセットしています。データベースのホスト名として'db'を指定しています。
+    environment:
+      DB_HOST: db
+
+    # 'web'サービスと'db'サービスをリンクします。これにより、'web'から'db'のホスト名でアクセスできるようになります。
+    links:
+      - db
+
+    # ホストのポートとコンテナのポートのマッピングを定義しています。ホストの80番ポートがコンテナの80番ポートにフォワードされます。
+    ports:
+      - 80:80
+
+    # ホストの現在のディレクトリとコンテナの/appディレクトリをマウントして連携させます。
+    volumes:
+      - .:/app
+
+    # コンテナ内での作業ディレクトリを指定しています。
+    working_dir: /app
+
+  # 'db'という名前のサービスを定義しています。
+  db:
+    # PostgreSQLの公式イメージを基にサービスを作成します。
+    image: postgres:14-alpine
+
+    # 環境変数をセットしています。データベースのパスワード、名前、ユーザー名を指定しています。
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sample_dev
+      POSTGRES_USER: postgres
+
+    # ホストの5432番ポートとコンテナの5432番ポートをマッピングしています。
+    ports:
+      - 5432:5432
+
+    # データを永続化するためのボリュームを指定しています。これにより、コンテナが停止・削除されてもデータが保持されます。
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+# 'dbdata'という名前のボリュームを定義しています。このボリュームは上述の'db'サービスで使用されます。
+volumes:
+  dbdata:
