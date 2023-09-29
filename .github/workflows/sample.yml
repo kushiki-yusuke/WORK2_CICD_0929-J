@@ -13,6 +13,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - uses: actions/setup-elixir@v1
+      with:
+        otp-version: "23.1.1"
+        elixir-version: "1.11.1"
+
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
