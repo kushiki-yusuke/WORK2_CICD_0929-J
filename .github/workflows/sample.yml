@@ -2,7 +2,7 @@ name: Build and Push Elixir app runnner
 on:
   push:
     branches:
-      - cicd
+      - main
 jobs:
   build-and-push:
 
