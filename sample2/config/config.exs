@@ -15,7 +15,7 @@ config :sample, SampleWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Sample.PubSub,
-  live_view: [signing_salt: "8MaNBxYe"]
+  live_view: [signing_salt: "3d1B5VFc"]
 
 # Configures the mailer
 #
