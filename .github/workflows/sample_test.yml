@@ -1,0 +1,71 @@
+name: Phoenix CI
+
+# このワークフローは、`main`ブランチへのpushの際にトリガーされます。
+on:
+  push:
+    branches: [ "develop" ]
+
+# このワークフローで必要な権限を指定します。読み取り専用の権限を内容に付与しています。
+permissions:
+  contents: read
+
+# ジョブの定義部分。このワークフローには、"build"という名前のジョブがあります。
+jobs:
+  build:
+    name: Build and test # ジョブのフレンドリー名を定義します。
+    runs-on: ubuntu-latest # このジョブは最新のUbuntuランナー上で実行されます。
+
+    steps:  # ジョブを構成するステップのリスト。
+    - uses: actions/checkout@v3 # ソースコードをチェックアウトするためのアクション。
+
+    # ElixirとErlang/OTPをセットアップします。※ 今回はElixirですが、実際にはここは皆さんが利用する言語に合わせてください。
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1.16.0 # v1.16.0
+      with:
+        elixir-version: '1.15.2' # 使用するElixirのバージョン。
+        otp-version: '26.0' # 使用するErlang/OTPのバージョン。※ ElixirはErlang OTPのVM上で動く為
+
+    # Node.jsをセットアップ
+    - name: Setup Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    # 依存関係のキャッシュを復元するステップ。以前の実行でキャッシュされた依存関係を再利用して、ビルド時間を短縮します。
+    - name: Restore dependencies cache
+      uses: actions/cache@v3
+      with: # 依存関係をキャッシュするディレクトリのパス。キャッシュのキーやキャッシュの復元キーを設定してます
+        path: | # "|" は複数行のコマンドを書くためのYAMLの構文です。
+          sample/deps
+          sample/_build
+          sample/assets/node_modules
+        key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-mix-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-assets-
+
+    # Elixirの依存関係をインストールするステップ。
+    - name: Install Elixir dependencies
+      run: |
+        cd sample 
+        mix deps.get
+
+    # ステップの名前を定義しています。このステップでは、package.jsonが存在する場合にnpmの依存関係をインストールします。
+    - name: Install npm dependencies (if package.json exists)
+      run: | # "if [ -f "path" ]" は "path" というファイルが存在するかどうかをチェックするbashの条件文です。ここでは "sample/assets/package.json" が存在するかを確認しています。
+        if [ -f "sample/assets/package.json" ]; then
+        cd sample/assets
+        npm install
+        else
+        echo "package.json not found, skipping npm install"
+        fi
+      shell: /usr/bin/bash -e {0} # このステップで使用するシェルを指定しています。"-e"オプションは、コマンドがエラーで終了した場合にシェルを終了させるためのものです。
+
+    # テストを実行
+    - name: Run tests
+      run: |
+        cd sample
+        mix test
+      env:
+        MIX_ENV: test

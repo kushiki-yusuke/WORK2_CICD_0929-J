@@ -37,10 +37,10 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:work2 ./sample
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:work2
 
-    # テストを実行
-    - name: Run tests
-      run: |
-        cd sample
-        mix test
-      env:
-        MIX_ENV: test
+    # # テストを実行
+    # - name: Run tests
+    #   run: |
+    #     cd sample
+    #     mix test
+    #   env:
+    #     MIX_ENV: test
